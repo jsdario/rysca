@@ -35,7 +35,6 @@ void create_specific_request (char ** entry_array, int num_entries){
      message_ptr->entry[i].family_id =  htons(2);
      message_ptr->entry[i].route_tag = 0;
      message_ptr->entry[i].metric = 0;
-     printf ("<%s>\n", entry_array[i]);
      ipv4_str_addr (entry_array[i], aux);
      
      memcpy (message_ptr->entry[i].ip_addr, aux, IPv4_ADDR_SIZE);
@@ -202,7 +201,7 @@ int main(int argc , char *argv[]) {
     ipv4_addr_t src;
     int bytes_sent;
     int bytes_recv;
-    int * src_port;
+    int src_port;
     
     ipv4_addr_t aux;
 
@@ -244,9 +243,6 @@ int main(int argc , char *argv[]) {
 	  	bold("Please insert number of entries to ask for\n");  
 		printf(">");
                 scanf("%u",&user_num_entries);
-		printf("\n");
-		
-		
 		
 		int k;
 		for (k=0; k<user_num_entries; k++){
@@ -264,7 +260,7 @@ int main(int argc , char *argv[]) {
 		  strcpy (entry_array [k], entry_buffer);
 		  //REMEMBER TO FREEEEEEEEEE
 		}
-		print_success ("Done with inserting IPv4 addresses\n");
+        printf("\n");
 	    //FOR SPECIFIC ENTRIES
             option = 5;
 	}else{
@@ -280,13 +276,17 @@ int main(int argc , char *argv[]) {
             create_request ( );
             print_notice("Sending a request...");
             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
-            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, src_port);
+            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
 
             if ( bytes_recv < 0) {
                 print_alert("bytes_recv -1 \n");
                 return -1;
             } else if ( bytes_recv == 0 ) {
                 print_warning("Nobody answered\n");
+            }else{
+                table = convert_message_table ( message_ptr, 
+                rip_number_entries(bytes_recv));
+                rip_route_table_print ( table );
             }
 
         } else if( option > 1 && option < 4) {
@@ -298,30 +298,20 @@ int main(int argc , char *argv[]) {
 	    //create_request ( );
 	    bold ("Sending a request...\n");
             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
-            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, src_port);
-
+            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+            print_success ("RECEIVED!!\n");
             if ( bytes_recv < 0) {
                 print_alert("bytes_recv -1 \n");
                 return -1;
             } else if ( bytes_recv == 0 ) {
                 print_warning("Nobody answered\n");
+            }else{
+                table = convert_message_table ( message_ptr, 
+                rip_number_entries(bytes_recv));
+                rip_route_table_print ( table );
             }
 	  
 	}
-
-        if( bytes_sent <= 0 ) {
-
-            print_alert("Error sending @ main() : ripv2_client.c\n");
-            return -1;
-        }
-
-        if( table->num_entries > 0 ) {
-            table = convert_message_table ( message_ptr, 
-                rip_number_entries(bytes_recv));
-            rip_route_table_print ( table );
-        } else {
-            printf("(Empty table)\n");
-        }
 
         option = 0; //so we set to 0 option and avoid other acts
     }

@@ -140,7 +140,7 @@
       
        }
        
-      printf ("%d\n", bytes_recv);
+     
       ipv4_addr_str ( arp_reply_ptr->ip_src, ip_str_recv );
       mac_addr_str ( arp_reply_ptr->mac_src, mac_str_recv );
      
@@ -202,7 +202,7 @@
 
     }
 
-    //return 1;
+    return 1;
   }
 
   void print_cache () 

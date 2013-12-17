@@ -54,6 +54,7 @@ void send_update (rip_header_ptr pointer, int num_entries, int timer_ended){
 void send_response (ipv4_addr_t dst, rip_header_ptr pointer, int num_entries, int dst_port){
 
   printf ("Sending response\n\n");
+  //print_packet (pointer, num_entries);
   rip_send (dst, pointer, num_entries, dst_port);  
 }
 
@@ -161,7 +162,7 @@ rip_table_t * table_to_send (rip_table_t * table, rip_table_t * table_aux){
   int j;
 
   rip_table_t * table_send = rip_table_create ();
-
+   
   for (i=0; i<RIP_ROUTE_TABLE_SIZE; i++){
 
     if (table->routes[i] != NULL){
@@ -170,7 +171,7 @@ rip_table_t * table_to_send (rip_table_t * table, rip_table_t * table_aux){
 
        if (table_aux->routes[j] != NULL){
         /* If the IP's are the same, we proceed */
-        if (same_entry (table->routes[i]->ipv4_addr, table_aux->routes[i]->ipv4_addr)){
+        if (same_entry (table->routes[i]->ipv4_addr, table_aux->routes[j]->ipv4_addr)){
           rip_route_table_add (table_send, table->routes[i]);
 
         }

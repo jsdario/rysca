@@ -41,7 +41,8 @@ rip_table_t * rip_table_create()
       table->routes[i] = NULL;
     }
   }
-
+   
+  table->num_entries = 0;
   return table;
 }
 
@@ -467,6 +468,8 @@ rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries){
   char ifname[IFACE_NAME_LENGTH];
   strcpy( ifname, eth_getname(iface_handler));
   
+  int index = 0;
+
   int i;
   
   for (i=0; i<num_entries; i++){
@@ -479,8 +482,9 @@ rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries){
       pointer->entry [i].ip_next,
       pointer->entry [i].metric
       );
-    rip_route_table_add (table, route);
+   index = rip_route_table_add (table, route);
     
+    timerms_reset (&table->routes[index]->time, TIMEOUT);
     
   }
   

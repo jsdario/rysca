@@ -70,6 +70,9 @@ int main(int argc, char * argv[]) {
 
 //WE RECEIVE A MESSAGE
    if (bytes_received>0){
+  
+   //WE CONVERT THE MESSAGE TO A ROUTE TABLE FORMAT
+      table_aux = convert_message_table (message_ptr, rip_number_entries(bytes_received));
 
     if ( is_verbose ) {
 
@@ -79,9 +82,6 @@ int main(int argc, char * argv[]) {
 
 //IF THE MESSAGE IS A RESPONSE...
     if (message_ptr->command == 2) {
-
-      //WE CONVERT THE MESSAGE TO A ROUTE TABLE FORMAT
-      table_aux = convert_message_table (message_ptr, rip_number_entries(bytes_received));
 
   //VALIDATE (HAY QUE IMPLEMENTARLO)
 
@@ -97,10 +97,10 @@ int main(int argc, char * argv[]) {
         /* If true, send a triggered up8 */
         create_rip_message (message_ptr, table);
         send_update (message_ptr, table->num_entries, timer_ended(update_timer));
-        bold ("\nCurrent table:\n");
-        rip_route_table_print ( table );
       //rip_route_table_write (table, RIP_TABLE_TXT);
       }
+      bold ("\nCurrent table:\n");
+      rip_route_table_print ( table );
     }
 
     if (message_ptr->command == 1 && 
