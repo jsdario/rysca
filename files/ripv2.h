@@ -1,0 +1,160 @@
+#ifndef _RIPV2_H
+#define _RIPV2_H
+
+#include "udp.h"
+#include <errno.h>
+
+
+#define RIP_PORT 520
+#define RIP_HEADER 4
+#define RIP_ENTRY 20
+#define RIP_MAX 504
+#define RIP_MULTICAST_IPv4 "224.0.0.9"
+#define RIP_ROUTE_TABLE_SIZE 30
+#define RIP_ONE_ENTRY_SIZE 24
+#define TIMEOUT 20000
+#define UPDATE_TIME 30000
+#define GARBAGE_COLLECTOR 10000
+#define TIMER_ZERO 0
+#define INFINITE_TIMER -1
+
+/* 
+*    !# Esto es un recordatorio de la estructura de datos, 
+*    !# para implementar las estructuras    
+*
+*    RIP-2
+*
+*       0                   1                   2                   3
+*       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+*      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*      | Address Family Identifier (2) |        Route Tag (2)          |
+*      +-------------------------------+-------------------------------+
+*      |                         IP Address (4)                        |
+*      +---------------------------------------------------------------+
+*      |                         Subnet Mask (4)                       |
+*      +---------------------------------------------------------------+
+*      |                         Next Hop (4)                          |
+*      +---------------------------------------------------------------+
+*      |                         Metric (4)                            |
+*      +---------------------------------------------------------------+*
+*      
+*       0                   1                   2                   3
+*       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+*      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*      |  command (1)  |  version (1)  |       must be zero (2)        |
+*      +---------------+---------------+-------------------------------+
+*      |                                                               |
+*      ~                         RIP Entry (20)                        ~
+*      |                                                               |
+*      +---------------+---------------+---------------+---------------+   
+*/
+
+typedef struct {
+
+  uint16_t family_id;
+  uint16_t route_tag;
+  ipv4_addr_t ip_addr;
+  ipv4_addr_t ip_mask;
+  ipv4_addr_t ip_next;
+  uint32_t metric;
+} rip_entry, *rip_entry_ptr ;
+
+typedef struct {
+
+  uint8_t command;
+  uint8_t version;
+  uint16_t zeros;
+  rip_entry entry [25];
+} rip_header, *rip_header_ptr;
+
+typedef struct {
+
+  ipv4_addr_t ipv4_addr;
+  ipv4_addr_t ipv4_mask;
+  char iface [IFACE_NAME_LENGTH];
+  ipv4_addr_t ipv4_next;
+  int metric;
+  timerms_t time;
+  int garbage_flag;
+} rip_route_t;
+
+typedef struct {
+
+  rip_route_t * routes[RIP_ROUTE_TABLE_SIZE];
+  int num_entries;
+} rip_table_t;
+
+/* Definiciones de tipos declarados en el ripv2.c 
+typedef struct ripv2_entry rip_entry;
+typedef struct ripv2_entry *rip_entry_ptr;
+typedef struct ripv2_header rip_header, *rip_header_ptr;
+typedef struct ripv2_header *rip_header_ptr;
+typedef struct rip_route rip_route_t;
+typedef struct rip_table rip_table_t; */
+
+/* Funciones de impresion de una entrada o un paquete */
+void print_entry (rip_entry_ptr);
+void print_packet (rip_header_ptr, int num_entries);
+
+
+int rip_send (ipv4_addr_t dst, rip_header_ptr, int num_entries, int dst_port);
+
+/* Devulve el numero de entradas en el 'response' */
+/* Revisar por si están mindfucked o son alias utiles */
+int rip_message_size (int num_entries);
+int rip_number_entries (int message_size);
+int initialize_rip (rip_table_t * pointer);
+int rip_recv (ipv4_addr_t src, rip_header_ptr, int timeout, int * port);
+
+/*
+* Lista con estructura definida arriba
+* que contiene numero de entradas
+* y puntero al comienzo de la lista
+*/
+rip_table_t * rip_table_create();
+
+/*
+*  Crea un elemento ruta rip para enlazar
+*  en la tabla de rutas
+*  @return &elemento
+*/
+rip_route_t * rip_route_create ( ipv4_addr_t subnet, 
+  ipv4_addr_t mask, char * iface_name, ipv4_addr_t next_hop, uint32_t metric );
+
+int rip_route_table_add ( rip_table_t *, rip_route_t *);
+rip_route_t * rip_route_table_remove ( rip_table_t * table, int index );
+rip_route_t * rip_route_table_get ( rip_table_t * table, int index );
+int rip_route_table_find ( rip_table_t * table, ipv4_addr_t subnet, ipv4_addr_t mask );
+int rip_route_table_read ( char * filename, rip_table_t * table );
+int rip_route_table_output ( FILE * out, rip_table_t * table, int metric );
+int rip_route_table_write ( rip_table_t * table, char * filename );
+void rip_route_table_print ( rip_table_t * table );
+void rip_route_free ( rip_route_t * route );
+void rip_route_table_free ( rip_table_t * table );
+rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries);
+int compare_tables (rip_table_t * table, rip_table_t * table_aux, int num_entries, ipv4_addr_t src);
+
+
+/*
+* Copies route aux into the index, removing the previous
+* and sets the timer to the previous entry timer
+*/
+int rip_replace_entry (rip_table_t * table, rip_route_t * route, rip_route_t * route_aux, int index);
+
+/*
+* ANOTHER ALIAS BY JAY-JAY! This time, it JUST says if is 16!
+* He is our miracle. YES, I have done this so many times this is
+* copy-paste.
+*
+* BTW, I changed its name to be MOAR pro, i hop ya liek it
+*/
+int metric_is_inf (int metric);
+
+/* 
+* If the ip is the same, we return 1, otherwise, 0, it is an alias
+* for memcmp
+*/
+int same_entry (ipv4_addr_t addr, ipv4_addr_t addr_aux);
+
+#endif /* _RIPV2_H */
+

@@ -1,0 +1,3 @@
+# ../files/rip_table.txt
+#
+# SubnetAddr  	SubnetMask    	Iface  	NextHop       	Metric 	Timeout
