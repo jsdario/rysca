@@ -52,9 +52,9 @@ rip_table_t * rip_table_create()
 *  en caso de implementar
 */
 
-int initialize_rip (rip_table_t * pointer){
+int initialize_rip (rip_table_t * pointer, int port){
 
-  int flag = udp_open (RIP_PORT);
+  int flag = udp_open (port);
 
   if (flag == -1) {
     print_alert ("Unable to open port\n");
@@ -235,13 +235,13 @@ int rip_route_table_read ( char * filename, rip_table_t * table )
           filename, linenum, gw_str);
         break;
       }
-
+ 
       int metric = atoi (metric_str);
       //int timeout = atoi (timeout_str);
 
       /* Create new route & add it to Route Table */
       rip_route_t * new_route = 
-      rip_route_create(subnet, mask, iface_name, gateway, metric);
+      rip_route_create(subnet, mask, iface_name, gateway, ntohl(metric));
 
       if (table != NULL) {
         err = rip_route_table_add(table, new_route);
@@ -260,6 +260,7 @@ int rip_route_table_read ( char * filename, rip_table_t * table )
   /* Close IP Route Table file */
     fclose(routes_file);
 
+    table->num_entries = read_routes;
     return read_routes;
   }
 
@@ -457,6 +458,35 @@ int rip_recv (ipv4_addr_t src, rip_header_ptr pointer, int timeout, int * src_po
 /*
 * Funcion que coge un mensaje rip, le da formato y lo añade a la tabla.
 */
+
+void add_entries_table (rip_table_t * table, rip_header_ptr pointer, int num_entries){
+   
+
+  char ifname[IFACE_NAME_LENGTH];
+  strcpy( ifname, eth_getname(iface_handler));
+
+  int index = 0;
+
+  int i;
+
+  for (i=0; i<num_entries; i++){ 
+
+     rip_route_t * route = rip_route_create 
+    (
+      pointer->entry [i].ip_addr,
+      pointer->entry [i].ip_mask,
+      ifname, 
+      pointer->entry [i].ip_next,
+      pointer->entry [i].metric
+      );
+   index = rip_route_table_add (table, route);
+    
+    timerms_reset (&table->routes[index]->time, TIMEOUT);
+  }
+      
+}
+
+
 rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries){
 
   rip_table_t * table = rip_table_create ();
@@ -478,7 +508,7 @@ rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries){
     (
       pointer->entry [i].ip_addr,
       pointer->entry [i].ip_mask,
-      ifname, //used to be "eth1" hardcoded
+      ifname, 
       pointer->entry [i].ip_next,
       pointer->entry [i].metric
       );

@@ -145,7 +145,7 @@ void create_response( int option ) {
         message_ptr->entry[0].family_id = htons(2);
         message_ptr->entry[0].route_tag = 0;
         message_ptr->entry[0].metric = htonl (3);
-        ipv4_str_addr ("10.0.2.15", addr);
+        ipv4_str_addr ("1.1.1.1", addr);
         memcpy (message_ptr->entry[0].ip_addr, addr, IPv4_ADDR_SIZE);
         ipv4_str_addr ("255.255.255.0", addr);
         memcpy (message_ptr->entry[0].ip_mask, addr, IPv4_ADDR_SIZE);
@@ -154,16 +154,16 @@ void create_response( int option ) {
         message_ptr->entry[1].family_id = htons(2);
         message_ptr->entry[1].route_tag = 0;
         message_ptr->entry[1].metric = htonl (16);
-        ipv4_str_addr ("10.0.3.15", addr);
+        ipv4_str_addr ("2.2.2.2", addr);
         memcpy (message_ptr->entry[1].ip_addr, addr, IPv4_ADDR_SIZE);
         ipv4_str_addr ("255.255.255.255", addr);
         memcpy (message_ptr->entry[1].ip_mask, addr, IPv4_ADDR_SIZE);
-        ipv4_str_addr ("10.0.6.2", addr);
+        ipv4_str_addr ("3.3.3.3", addr);
         memcpy (message_ptr->entry[1].ip_next, addr, IPv4_ADDR_SIZE);
         message_ptr->entry[2].family_id = htons(2);
         message_ptr->entry[2].route_tag = 0;
         message_ptr->entry[2].metric = htonl (15);
-        ipv4_str_addr ("10.0.0.6", addr);
+        ipv4_str_addr ("4.5.5.5", addr);
         memcpy (message_ptr->entry[2].ip_addr, addr, IPv4_ADDR_SIZE);
         ipv4_str_addr ("255.0.0.0", addr);
         memcpy (message_ptr->entry[2].ip_mask, addr, IPv4_ADDR_SIZE);
@@ -193,8 +193,8 @@ int main(int argc , char *argv[]) {
     int user_num_entries = 0;
     
     char entry_buffer [120];
-    
-    
+
+    int random_port = random_number(1024,  65535);
     
     char * entry_array [RIP_ROUTE_TABLE_SIZE];
     ipv4_addr_t dst;
@@ -207,7 +207,7 @@ int main(int argc , char *argv[]) {
 
     if(argc != 2 && argc != 3) {
 
-        printf("Usage: rip_client <ip_address>\n");
+    printf("Usage: rip_client <ip_address>\n");
 	printf("Specific entries usage: rip_client <ip_address> -X\n");
         return -1;
     }
@@ -216,7 +216,7 @@ int main(int argc , char *argv[]) {
 
     rip_table_t * table = rip_table_create();
 
-    if (initialize_rip (table) == -1) {
+    if (initialize_rip (table, random_port) == -1) {
 
         return -1;
     }
@@ -276,6 +276,7 @@ int main(int argc , char *argv[]) {
             create_request ( );
             print_notice("Sending a request...");
             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
+
             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
 
             if ( bytes_recv < 0) {
@@ -289,17 +290,34 @@ int main(int argc , char *argv[]) {
                 rip_route_table_print ( table );
             }
 
-        } else if( option > 1 && option < 4) {
+        } else if( option > 1 && option <= 4) {
             create_response ( option );
             bytes_sent = rip_send(dst, message_ptr, 4, RIP_PORT);
         } else if ( option == 5){
 	    
-	    create_specific_request (entry_array, user_num_entries);
-	    //create_request ( );
-	    bold ("Sending a request...\n");
-            bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
-            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
-            print_success ("RECEIVED!!\n");
+         bold ("Sending a request...\n");
+
+         if (user_num_entries <= 25){
+             create_specific_request (entry_array, user_num_entries);
+             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
+             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+             table = convert_message_table ( message_ptr, 
+                rip_number_entries(bytes_recv));
+
+         }else{
+
+             create_specific_request (entry_array, 25);
+             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
+             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+             table = convert_message_table ( message_ptr, 
+                rip_number_entries(bytes_recv));
+             create_specific_request (entry_array+25, user_num_entries - 25);
+             bytes_sent = bytes_sent + rip_send(dst, message_ptr, 1, RIP_PORT);
+             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+             add_entries_table (table, message_ptr, 
+                rip_number_entries(bytes_recv));
+  
+         }
             if ( bytes_recv < 0) {
                 print_alert("bytes_recv -1 \n");
                 return -1;

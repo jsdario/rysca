@@ -578,7 +578,7 @@ multicast_handler join_multicast( char * ip_str ) {
 
   multicast_handler handler = NULL;
   char mac_str[MAC_STR_LENGTH];
-  mac_addr_t mac_addr;
+  //mac_addr_t mac_addr;
   ipv4_addr_t ip_addr;
   ipv4_str_addr( ip_str, ip_addr);
 

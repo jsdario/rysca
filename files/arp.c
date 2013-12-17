@@ -44,8 +44,6 @@
 
   int arp_resolve (eth_iface_t * iface, ipv4_addr_t host_addr, ipv4_addr_t target_addr, mac_addr_t mac_addr) {
 
-      print_cache();
-
     if(cache_entries == 0) {
       print_notice("Opened cache arp\n");
       memset(cache, 0, sizeof(struct cache_resource)*_CACHE_SIZE);
@@ -175,7 +173,6 @@
 	      return 1;
 	    }
 
-	    print_cache();
 	    
 	  }
 	  print_warning ("ARP cache full\n");

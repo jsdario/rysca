@@ -196,17 +196,42 @@ int eth_send
 
   print_pkt((unsigned char *) &eth_frame, eth_frame_len, ETH_HEADER_SIZE); */
 
+
+  /* ethernet padding */
+
+ unsigned char * zeros;
+
+  if (payload_len < 46 ) {
+    eth_frame_len += 46 - payload_len; //must be after IEEE recommendations
+    zeros = malloc( 46 - payload_len );
+    bzero( zeros, 46 - payload_len);
+    memcpy( eth_frame.payload + payload_len, zeros, 46 - payload_len );
+  }
+
+
   /* Enviar la trama Ethernet creada con rawnet_send() y comprobar errores */
   bytes_sent = rawnet_send
     (iface->raw_iface, (unsigned char *) &eth_frame, eth_frame_len);
+
+
   if (bytes_sent == -1) {
     fprintf(stderr, "eth_send(): ERROR en rawnet_send(): %s\n", 
             rawnet_strerror());
     return -1;
   }
 
-  /* Devolver el número de bytes de datos recibidos */
-  return (bytes_sent - ETH_HEADER_SIZE);
+    /* Devolver el número de bytes de datos recibidos */
+  int return_value = (bytes_sent - ETH_HEADER_SIZE);
+
+  /* liberar zeros de ethernet padding */
+  if (payload_len < 46 ) {
+
+    return_value = return_value -( 46 - payload_len ); //restar el padding
+    free(zeros);
+  }
+
+
+  return return_value;
 }
 
 /* int eth_recv 

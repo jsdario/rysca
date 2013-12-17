@@ -13,7 +13,7 @@
 #define RIP_ROUTE_TABLE_SIZE 30
 #define RIP_ONE_ENTRY_SIZE 24
 #define TIMEOUT 20000
-#define UPDATE_TIME 30000
+#define UPDATE_TIME 30000 
 #define GARBAGE_COLLECTOR 10000
 #define TIMER_ZERO 0
 #define INFINITE_TIMER -1
@@ -103,7 +103,7 @@ int rip_send (ipv4_addr_t dst, rip_header_ptr, int num_entries, int dst_port);
 /* Revisar por si están mindfucked o son alias utiles */
 int rip_message_size (int num_entries);
 int rip_number_entries (int message_size);
-int initialize_rip (rip_table_t * pointer);
+int initialize_rip (rip_table_t * pointer, int port);
 int rip_recv (ipv4_addr_t src, rip_header_ptr, int timeout, int * port);
 
 /*
@@ -133,7 +133,7 @@ void rip_route_free ( rip_route_t * route );
 void rip_route_table_free ( rip_table_t * table );
 rip_table_t * convert_message_table (rip_header_ptr pointer, int num_entries);
 int compare_tables (rip_table_t * table, rip_table_t * table_aux, int num_entries, ipv4_addr_t src);
-
+void add_entries_table (rip_table_t * table, rip_header_ptr pointer, int num_entries);
 
 /*
 * Copies route aux into the index, removing the previous

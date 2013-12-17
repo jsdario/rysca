@@ -1,3 +1,6 @@
 # ../files/rip_table.txt
 #
-# SubnetAddr  	SubnetMask    	Iface  	NextHop       	Metric 	Timeout
+# SubnetAddr  	SubnetMask    	Iface  	NextHop     Metric 	Timeout
+2.2.2.2         255.255.255.0   eth0    0.0.0.0		1		-1
+0.0.0.0	        0.0.0.0	        eth0	0.0.0.0		1		-1
+1.1.1.1         0.0.0.0			eth0	0.0.0.0		1       -1

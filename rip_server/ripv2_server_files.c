@@ -76,12 +76,45 @@ void create_rip_message (rip_header_ptr pointer, rip_table_t * table){
   for (i=0; i < RIP_ROUTE_TABLE_SIZE ; i++){
 
    if (table->routes[i] != NULL){
-     pointer->entry[i].family_id = htons (2);
+     pointer->entry[j].family_id = htons (2);
      memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
      memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
      memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
      pointer->entry[j].metric = htonl(table->routes[i]->metric);
      j++;
+   }
+ } 
+}
+
+void create_two_rip_message (rip_header_ptr pointer, rip_header_ptr pointer_two, rip_table_t * table){
+
+  pointer->command = 2; //Indicates response
+  pointer->version = 2;
+
+  int i;
+  int j = 0;
+  int k = 0;
+
+  for (i=0; i < RIP_ROUTE_TABLE_SIZE ; i++){
+
+   if (table->routes[i] != NULL){
+     if (j>24){
+     pointer_two->entry[k].family_id = htons (2);
+     memcpy (pointer_two->entry[k].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
+     memcpy (pointer_two->entry[k].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
+     memcpy (pointer_two->entry[k].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
+     pointer_two->entry[k].metric = htonl(table->routes[i]->metric);
+     k++;
+     }else{
+     pointer->entry[j].family_id = htons (2);
+     memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
+     memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
+     memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
+     pointer->entry[j].metric = htonl(table->routes[i]->metric);
+     j++;
+     }
+     
+     
    }
  } 
 }
