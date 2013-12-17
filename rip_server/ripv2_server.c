@@ -38,6 +38,10 @@ int main(int argc, char * argv[]) {
 
   signal(SIGINT, interrupt);
 
+  ipv4_addr_t multiaddress;
+
+  ipv4_str_addr (RIP_MULTICAST_IPv4, multiaddress);
+
   if(argc == 2) {
     if( !strcmp(argv[1], "--verbose")) {
       is_verbose = 1;
@@ -50,6 +54,10 @@ int main(int argc, char * argv[]) {
   bold ("Starting RIP Server... \t\t\t\t\t"); print_success("[ OK ]\n");
 
   table = rip_table_create ();
+  if (initialize_rip (table, RIP_PORT) == -1) {
+    /* Already printed advert inside function */
+    return -1;
+  }
   int K = rip_route_table_read ( RIP_TABLE_TXT, table );
 
   /* set inf timer to routes read from file */
@@ -58,13 +66,8 @@ int main(int argc, char * argv[]) {
 
     timerms_reset(&table->routes[k]->time, INFINITE_TIMER);
   }
- 
-  rip_table_t * table_aux;
 
-  if (initialize_rip (table, RIP_PORT) == -1) {
-    /* Already printed advert inside function */
-    return -1;
-  }
+  rip_table_t * table_aux;
 
   ipv4_addr_t src;
   long int r = random_number(-15, 15)*1000;
@@ -80,8 +83,7 @@ int main(int argc, char * argv[]) {
     if (timer_ended (update_timer)) { 
 
     /* Si se ha acabado el update timer */
-     create_rip_message (message_ptr, table);
-     send_update (message_ptr, table->num_entries, 1); 
+     send_rip_response (multiaddress, message_ptr, table, RIP_PORT); 
      r = random_number(-15, 15)*1000;
      if ( is_verbose ) printf("(update_time set to %ld)\n", r +UPDATE_TIME);
      update_timer = timer_start (UPDATE_TIME + r);
@@ -96,9 +98,9 @@ int main(int argc, char * argv[]) {
 
 //WE RECEIVE A MESSAGE
    if (bytes_received>0){
-  
+
    //WE CONVERT THE MESSAGE TO A ROUTE TABLE FORMAT
-      table_aux = convert_message_table (message_ptr, rip_number_entries(bytes_received));
+    table_aux = convert_message_table (message_ptr, rip_number_entries(bytes_received));
 
     if ( is_verbose ) {
 
@@ -111,7 +113,7 @@ int main(int argc, char * argv[]) {
 
   //VALIDATE (HAY QUE IMPLEMENTARLO)
   //number of entries in the received message
-  int num_entries = rip_number_entries (bytes_received);
+      int num_entries = rip_number_entries (bytes_received);
 
       int trig_update_flag = 0; //by default, when receiving, do not send update
 
@@ -120,10 +122,9 @@ int main(int argc, char * argv[]) {
       
       
       if (trig_update_flag){
-        /* If true, send a triggered up8 */
-        create_rip_message (message_ptr, table);
-        send_update (message_ptr, table->num_entries, timer_ended(update_timer));
-      
+        
+       send_rip_response (multiaddress, message_ptr, table, RIP_PORT);
+
       }
       bold ("\nCurrent table:\n");
       rip_route_table_print ( table );
@@ -133,19 +134,11 @@ int main(int argc, char * argv[]) {
       metric_is_inf(ntohl(message_ptr->entry[0].metric))) {
       //IF REQUEST FOR WHOLE TABLE, RESPOND WITH WHOLE TABLE
 
-      printf ("................%d\n", table->num_entries);
-
     print_warning("Received a request for single entry, sending whole table\n");
 
-    if (table->num_entries<=25){
-        create_rip_message (message_ptr, table);
-        send_response (src, message_ptr, table->num_entries, src_port);
-    }else{
-        create_two_rip_message (message_ptr, message_two_ptr, table);
-        send_response (src, message_ptr, 25, src_port);
-        send_response (src, message_two_ptr, table->num_entries -25, src_port);
+      send_rip_response (src, message_ptr, table, src_port);
+  
 
-    }
 
   }  else if (message_ptr->command == 1) {
 //IF REQUEST FOR SPECIFIC ENTRIES, RESPOND WITH SPECIFIC ENTRIES IF FOUND
@@ -153,15 +146,10 @@ int main(int argc, char * argv[]) {
     print_warning("Received a request for specific entries\n");
     rip_table_t * table_send = table_to_send (table, table_aux);
 
-    if (table_send->num_entries<=25){
-        create_rip_message (message_ptr, table_send);
-        send_response (src, message_ptr, table_send->num_entries, src_port);
-    }else{
-        create_two_rip_message (message_ptr, message_two_ptr, table_send);
-        send_response (src, message_ptr, 25, src_port);
-        send_response (src, message_two_ptr, table_send->num_entries -25, src_port);
+    send_rip_response (src, message_ptr, table_send, src_port);
 
-    }
+
+    
     
   }
 }

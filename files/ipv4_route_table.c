@@ -162,10 +162,10 @@ int ipv4_route_lookup ( ipv4_route_t * route, ipv4_addr_t addr )
     
   }
 
-  if( prefix_length == -1 ) {
+  /*if( prefix_length == -1 ) {
     underline("\nTarget ip outside dev enviroment\n");
     printf("\t ipv4_route_table: ipv4_route_lookup(): prefix_length == -1\n");
-  }
+  }*/
 
   return prefix_length;
 }

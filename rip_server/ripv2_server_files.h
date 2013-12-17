@@ -17,5 +17,7 @@ int garbage_collector_start (rip_table_t * table, timerms_t * timer);
 int garbage_collector (rip_table_t * table, timerms_t * timer);
 
 rip_table_t * table_to_send (rip_table_t * table, rip_table_t * table_aux);
+//SENDS MORE THAN 25
+void  send_rip_response (ipv4_addr_t src, rip_header_ptr pointer, rip_table_t * table, int src_port);
 
 #endif /* _RIPV2_SERVER_FILES_H */

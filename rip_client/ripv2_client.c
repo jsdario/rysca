@@ -101,7 +101,7 @@ void create_response( int option ) {
         message_ptr->entry[0].family_id = htons(2);
         message_ptr->entry[0].route_tag = 0;
         message_ptr->entry[0].metric = htonl (2);
-        ipv4_str_addr ("10.0.2.15", addr);
+        ipv4_str_addr ("2.2.2.2", addr);
         memcpy (message_ptr->entry[0].ip_addr, addr, IPv4_ADDR_SIZE);
         ipv4_str_addr ("255.255.255.0", addr);
         memcpy (message_ptr->entry[0].ip_mask, addr, IPv4_ADDR_SIZE);
@@ -274,7 +274,7 @@ int main(int argc , char *argv[]) {
         if (option == 1) {
             
             create_request ( );
-            print_notice("Sending a request...");
+            print_notice("Sending a request...\n");
             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
 
             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);

@@ -297,11 +297,14 @@ int rip_route_table_read ( char * filename, rip_table_t * table )
         ifname = route_i->iface;
         ipv4_addr_str(route_i->ipv4_next, gw_str);
         metric = route_i->metric;
+
         timeout = timerms_left (&route_i->time);
+        /*you like comments don't you? guess this =>*/
+        if (timeout == -2) timeout = -1;
 
         if (metric == 0) {
-         err = fprintf(out, "%-15s\t%-15s\t%s\t%-15s\n",
-          subnet_str, mask_str, ifname, gw_str);
+         err = fprintf(out, "%-15s\t%-15s\t%s\t%-15s\t%s\n",
+          subnet_str, mask_str, ifname, gw_str, "STATIC");
        } else {
          err = fprintf(out, "%-15s\t%-15s\t%s\t%-15s\t%d\t%d\n",
           subnet_str, mask_str, ifname, gw_str, metric, timeout);
@@ -762,7 +765,6 @@ void update_metrics (rip_table_t * pointer, int num_entries){
 *  or zero if tables are the same
 */
 int compare_tables (rip_table_t * table, rip_table_t * table_aux, int num_entries, ipv4_addr_t src){
-
 
   //UPDATE METRICS FOR INCOMING TABLE
   //lo que solo tiene sentido si el mensaje viene

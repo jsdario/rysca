@@ -65,53 +65,63 @@ void send_response (ipv4_addr_t dst, rip_header_ptr pointer, int num_entries, in
 * takes whole table and a pointer to the message
 * to be sent
 */
+
+
 void create_rip_message (rip_header_ptr pointer, rip_table_t * table){
 
   pointer->command = 2; //Indicates response
   pointer->version = 2;
 
-  int i;
-  int j = 0;
+    int i;
+    int j = 0;
 
-  for (i=0; i < RIP_ROUTE_TABLE_SIZE ; i++){
+    for (i=0; i < RIP_ROUTE_TABLE_SIZE ; i++){
 
-   if (table->routes[i] != NULL){
-     pointer->entry[j].family_id = htons (2);
-     memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
-     memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
-     memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
-     pointer->entry[j].metric = htonl(table->routes[i]->metric);
-     j++;
-   }
- } 
+     if (table->routes[i] != NULL){
+       pointer->entry[j].family_id = htons (2);
+       memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
+       memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
+       memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
+       pointer->entry[j].metric = htonl(table->routes[i]->metric);
+       j++;
+     }
+   } 
+
 }
 
-void create_two_rip_message (rip_header_ptr pointer, rip_header_ptr pointer_two, rip_table_t * table){
+void  send_rip_response (ipv4_addr_t src, rip_header_ptr pointer, rip_table_t * table, int src_port){
 
   pointer->command = 2; //Indicates response
   pointer->version = 2;
+  
 
   int i;
   int j = 0;
-  int k = 0;
+  int counter;
 
-  for (i=0; i < RIP_ROUTE_TABLE_SIZE ; i++){
+
+  for (i=0; i < RIP_ROUTE_TABLE_SIZE; i++){
 
    if (table->routes[i] != NULL){
+
+    if (counter >= table->num_entries){
+      printf ("SENDING.....\n");
+      send_response (src, pointer, table->num_entries, src_port);
+      return;
+    }
+
      if (j>24){
-     pointer_two->entry[k].family_id = htons (2);
-     memcpy (pointer_two->entry[k].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
-     memcpy (pointer_two->entry[k].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
-     memcpy (pointer_two->entry[k].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
-     pointer_two->entry[k].metric = htonl(table->routes[i]->metric);
-     k++;
+      printf ("SENDING.....\n");
+      send_response (src, pointer, table->num_entries, src_port);
+      j=0;
      }else{
-     pointer->entry[j].family_id = htons (2);
-     memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
-     memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
-     memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
-     pointer->entry[j].metric = htonl(table->routes[i]->metric);
-     j++;
+       pointer->entry[j].family_id = htons (2);
+       memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
+       memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
+       memcpy (pointer->entry[j].ip_next, table->routes[i]->ipv4_next, IPv4_ADDR_SIZE);
+       pointer->entry[j].metric = htonl(table->routes[i]->metric);
+       j++;
+       counter++;
      }
      
      
@@ -195,7 +205,7 @@ rip_table_t * table_to_send (rip_table_t * table, rip_table_t * table_aux){
   int j;
 
   rip_table_t * table_send = rip_table_create ();
-   
+
   for (i=0; i<RIP_ROUTE_TABLE_SIZE; i++){
 
     if (table->routes[i] != NULL){

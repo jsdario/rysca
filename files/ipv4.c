@@ -208,7 +208,7 @@ int ipv4_open() {
     mac_str_addr("01:00:5E:00:00:09", mac_addr_dst);
     //printf ("It is a multicast address\n"); //this should be only for verbose
 
-  } else {
+  } else if ( memcmp(dst, ipv4_hostaddr, sizeof(ipv4_addr_t)) == 0 ) {
 
     eth_getaddr (iface_handler, mac_addr_dst);
     //printf ("It is our own ip address\n"); //this should be only for verbose
@@ -560,14 +560,18 @@ int ip_subscribed_to( ipv4_addr_t addr ) {
  char ip_str[IPv4_STR_SIZE];
  ipv4_addr_str(addr, ip_str);
 
-  int i;
-  for(i = 0; i < _CACHE_SIZE; i++) {
-    if( strcmp(multicast_list[i].ip, ip_str) == 0 ) 
-    {
-      printf("We are subscribed to %s\n", ip_str);
-      return 1;
-    } 
-  }
+ int i;
+ for(i = 0; i < _CACHE_SIZE; i++) {
+  if( strcmp(multicast_list[i].ip, ip_str) == 0 ) 
+  {
+    //printf("We are subscribed to %s\n", ip_str);
+    return 1;
+  } 
+}
+
+//if is broadcast its ok too!
+if( addr[3] == 255 )
+ return 1;
 
   return 0; /* default */
 }
