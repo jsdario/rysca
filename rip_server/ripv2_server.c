@@ -137,20 +137,14 @@ int main(int argc, char * argv[]) {
     print_warning("Received a request for single entry, sending whole table\n");
 
       send_rip_response (src, message_ptr, table, src_port);
-  
-
 
   }  else if (message_ptr->command == 1) {
 //IF REQUEST FOR SPECIFIC ENTRIES, RESPOND WITH SPECIFIC ENTRIES IF FOUND
 
     print_warning("Received a request for specific entries\n");
     rip_table_t * table_send = table_to_send (table, table_aux);
-
-    send_rip_response (src, message_ptr, table_send, src_port);
-
-
-    
-    
+    send_rip_response (src, message_ptr, table_send, src_port);    
+   
   }
 }
 

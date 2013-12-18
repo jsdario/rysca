@@ -94,27 +94,35 @@ void  send_rip_response (ipv4_addr_t src, rip_header_ptr pointer, rip_table_t * 
   pointer->command = 2; //Indicates response
   pointer->version = 2;
   
-
   int i;
   int j = 0;
   int counter;
 
+  if( table->num_entries < 25 ) {
+    create_rip_message (pointer, table);
+    send_response (src, pointer, table->num_entries, src_port);
+    return;
+  }
 
   for (i=0; i < RIP_ROUTE_TABLE_SIZE; i++){
 
    if (table->routes[i] != NULL){
 
     if (counter >= table->num_entries){
+
       printf ("SENDING.....\n");
       send_response (src, pointer, table->num_entries, src_port);
       return;
     }
 
      if (j>24){
+
       printf ("SENDING.....\n");
       send_response (src, pointer, table->num_entries, src_port);
       j=0;
+
      }else{
+
        pointer->entry[j].family_id = htons (2);
        memcpy (pointer->entry[j].ip_addr, table->routes[i]->ipv4_addr, IPv4_ADDR_SIZE);
        memcpy (pointer->entry[j].ip_mask, table->routes[i]->ipv4_mask, IPv4_ADDR_SIZE);
@@ -122,9 +130,7 @@ void  send_rip_response (ipv4_addr_t src, rip_header_ptr pointer, rip_table_t * 
        pointer->entry[j].metric = htonl(table->routes[i]->metric);
        j++;
        counter++;
-     }
-     
-     
+     }     
    }
  } 
 }

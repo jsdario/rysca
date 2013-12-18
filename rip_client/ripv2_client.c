@@ -27,20 +27,17 @@ void create_specific_request (char ** entry_array, int num_entries){
   
   message_ptr->command = 1;
   message_ptr->version = 2;
-  
-  
+    
   
   for (i=0; i<num_entries; i++){
-    
+   
      message_ptr->entry[i].family_id =  htons(2);
      message_ptr->entry[i].route_tag = 0;
      message_ptr->entry[i].metric = 0;
      ipv4_str_addr (entry_array[i], aux);
      
      memcpy (message_ptr->entry[i].ip_addr, aux, IPv4_ADDR_SIZE);
-  
      free (entry_array[i]);
-    
   }
   
 
@@ -221,7 +218,9 @@ int main(int argc , char *argv[]) {
         return -1;
     }
 
-    for ( ;; ) {
+    int run = 1;
+
+    for ( ; run == 1; ) {
         
         if (argc == 2){
       
@@ -243,7 +242,12 @@ int main(int argc , char *argv[]) {
 	  	bold("Please insert number of entries to ask for\n");  
 		printf(">");
                 scanf("%u",&user_num_entries);
-		
+
+                if(user_num_entries <= 0) {
+                    print_alert("Invalid num of entries\n");
+                    exit(0);
+                }
+
 		int k;
 		for (k=0; k<user_num_entries; k++){
 		  
@@ -299,23 +303,27 @@ int main(int argc , char *argv[]) {
 
          if (user_num_entries <= 25){
              create_specific_request (entry_array, user_num_entries);
-             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
+             bytes_sent = rip_send(dst, message_ptr, user_num_entries, RIP_PORT);
              bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
              table = convert_message_table ( message_ptr, 
                 rip_number_entries(bytes_recv));
 
-         }else{
+             run = 0;
 
-             create_specific_request (entry_array, 25);
-             bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
-             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
-             table = convert_message_table ( message_ptr, 
-                rip_number_entries(bytes_recv));
-             create_specific_request (entry_array+25, user_num_entries - 25);
-             bytes_sent = bytes_sent + rip_send(dst, message_ptr, 1, RIP_PORT);
-             bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
-             add_entries_table (table, message_ptr, 
-                rip_number_entries(bytes_recv));
+         } else {
+
+            create_specific_request (entry_array, 25);
+            bytes_sent = rip_send(dst, message_ptr, 1, RIP_PORT);
+            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+            table = convert_message_table ( message_ptr, 
+            rip_number_entries(bytes_recv));
+            create_specific_request (entry_array+25, user_num_entries - 25);
+            bytes_sent = bytes_sent + rip_send(dst, message_ptr, 1, RIP_PORT);
+            bytes_recv = rip_recv( src, message_ptr, INFINITE_TIMER, &src_port);
+            add_entries_table (table, message_ptr, 
+            rip_number_entries(bytes_recv));
+
+            run = 0;
   
          }
             if ( bytes_recv < 0) {
