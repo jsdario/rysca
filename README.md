@@ -18,5 +18,7 @@ interact properly in a linux debian system.
 * Example of execution:
 
 cd path/to/rip_server
+
 rawnetcc server *.c ../files/*.c
+
 ./server [--verbose]
