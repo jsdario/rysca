@@ -1,45 +1,22 @@
 rysca
 =====
 
-jachrimo &amp; gfiorav &amp; riveraonada 
+Implementations of IP, ARP, UDP, RIP over a tiny ethernet library
+designed from rawnetcc. Works on Wifi interfaces also.
 
-#Reciente
+By jachrimo &amp; gfiorav &amp; riveraonada 
 
-* Comprobado que ip funciona en más de un salto (wireshark)
-* Arreglado un error que confundia host_addr y target_addr en ipsend & arp
-* Otra vez tocado arp para que funcione en máquina de jesus
+# Laboratory of Networks Advanced Services
 
-#Pasos terminados
+To compile the source the library 'rawnet.h' is needed.
+You can run the services opening the one at higher level
+but it will always need services at lower ones.
 
-* (TERMINADO) UDP no es funcional aún. Está implementado pero hay que depurarlo.
+All layers have been developed acording to the RFC's and should
+interact properly in a linux debian system.
 
-* (HECHO) Hay que arreglar ARP para que coja nuestra IP
-	-mejora: crear una cache ARP
-	[ MOVIDON ENTRE ORDENADORES ]
+* Example of execution:
 
-* (FUNCIONAL) Hay que hacer que ip_send() distinga las direcciones broadcast y multicast
-	-posibilidad: que mande a MAC broadcast
-	-mejora: que las mapee a MAC multicast
-
-#Pendiente
-
-* Terminar cliente : { servidor que procese request con peticiones especificas, 
-cliente tiene que imprimir lo que recibe }
-
-* Quitar las estructuras (como ip_header, udp_header...) de *.h y ponerlas en *.c
-
-* Que cada fichero *.c solo llame como cabecera a su *.h
-	-le pasa a algun fichero (es por limpieza)
-
-* Hay algo en trigger update que hace que actualice siempre que le llega un mensaje
-	-revisar, si las tablas no cambian no debe hacer nada
-
-* (HECHO) --Random timers para update--
-
-* Mapeo real de ip-mac multicast
-
-* checksum udp
-
-* Split Horizon
-
-¡Y creo que tendremos un diez!
+cd path/to/rip_server
+rawnetcc server *.c ../files/*.c
+./server [--verbose]
